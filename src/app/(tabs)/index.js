@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { API_KEY } from "../../../config.local"; 
+import { API_KEY } from "../../../config.local";
 
 import React, { useEffect, useState } from "react";
 import {
@@ -24,7 +24,7 @@ export default function Index() {
       body: JSON.stringify({
         query: {
           $query: {
-            $or: [{ lang: "fra" }],
+            $or: [{ lang: "eng" }],
           },
           $filter: {
             forceMaxDataTimeWindow: "31",
@@ -40,7 +40,10 @@ export default function Index() {
       }),
     })
       .then((res) => res.json())
-      .then((json) => setarticles(json.articles.results))
+      .then((json) => {const allArticles = json.articles.results;
+        const articlesWithImages = allArticles.filter(item => item.image !== null);
+        setarticles(articlesWithImages)
+        setarticles(articlesWithImages);})
       .catch((err) => console.log("Erreur :", err));
   }, []);
 
@@ -51,22 +54,33 @@ export default function Index() {
       <FlatList
         data={articles}
         renderItem={({ item }) => (
-  
-          <View style={styles.itemContainer}>
-            
-            <View style={styles.textContent}>
-              <Text style={styles.title}>{item.title}</Text>
-              
-              <Text style={styles.description} numberOfLines={3}>
-                {item.body} 
-              </Text>
-              
-              <Text style={styles.date}>{item.date}</Text>
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: "/details",
+                params: {
+                  articleImage: item.image, 
+                  articleTitle: item.title, 
+                  articleBody: item.body,
+                  articleDate :item.date
+                },
+              })
+            }
+          >
+            <View style={styles.itemContainer}>
+              <View style={styles.textContent}>
+                <Text style={styles.title}>{item.title}</Text>
+
+                <Text style={styles.description} numberOfLines={3}>
+                  {item.body}
+                </Text>
+
+                <Text style={styles.date}>{item.date}</Text>
+              </View>
+
+              <Image style={styles.image} source={{ uri: item.image }} />
             </View>
-
-            <Image style={styles.image} source={{ uri: item.image }} />
-
-          </View>
+          </Pressable>
         )}
         keyExtractor={(item) => item.uri}
       />
@@ -74,44 +88,42 @@ export default function Index() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1C1C1E", 
+    backgroundColor: "#1C1C1E",
   },
   itemContainer: {
-    flexDirection: "row",         
-    justifyContent: "space-between", 
-    backgroundColor: "#2C2C2E", 
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: "#2C2C2E",
     marginVertical: 8,
     marginHorizontal: 12,
     padding: 10,
     borderRadius: 8,
   },
   textContent: {
-    flex: 1, 
-    marginRight: 10, 
+    flex: 1,
+    marginRight: 10,
   },
   title: {
-    fontSize: 18,        
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#c4271eff",    
+    color: "#c4271eff",
   },
   image: {
     width: 100,
     height: 100,
-    borderRadius: 8,    
+    borderRadius: 8,
   },
   description: {
     fontSize: 14,
-    color: "#8E8E93",    
+    color: "#8E8E93",
     marginTop: 5,
   },
   date: {
     fontSize: 12,
-    color: "#ec554dff",    
+    color: "#ec554dff",
     marginTop: 8,
   },
-
 });
