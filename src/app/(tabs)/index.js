@@ -11,17 +11,16 @@ import {
   Image,
   Pressable,
   TextInput,
-  ActivityIndicator, // N'oublie pas d'importer l'indicateur
+  ActivityIndicator, 
 } from "react-native";
 
 export default function Index() {
   const [articles, setArticles] = useState([]);
-  const [searchText, setSearchText] = useState(""); // État pour le champ de texte
-  const [loading, setLoading] = useState(false); // État pour le chargement
+  const [searchText, setSearchText] = useState("");
+  const [loading, setLoading] = useState(false); 
 
-  // Ce nouvel état va DÉCLENCHER les appels API
   const [apiQuery, setApiQuery] = useState({
-    $query: { lang: "eng" }, // Requête par défaut au chargement (articles récents)
+    $query: { lang: "eng" }, 
   });
 
   const url = "https://eventregistry.org/api/v1/article/getArticles";
