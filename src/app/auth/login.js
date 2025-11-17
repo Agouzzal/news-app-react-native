@@ -97,12 +97,14 @@ const styles = StyleSheet.create({
     color: '#FFF',
     marginBottom: 10,
     textAlign: 'center',
+
   },
   subtitle: {
     fontSize: 16,
     color: '#8E8E93',
     marginBottom: 30,
     textAlign: 'center',
+fontFamily: 'Lato_400Regular', 
   },
   input: {
     backgroundColor: '#2C2C2E',
@@ -111,6 +113,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
     fontSize: 16,
+fontFamily: 'Lato_400Regular', 
   },
   button: {
     backgroundColor: '#c4271eff', 
@@ -123,6 +126,7 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontWeight: 'bold',
     fontSize: 16,
+fontFamily: 'Poppins_700Bold',
   },
   buttonOutline: {
     backgroundColor: 'transparent',
