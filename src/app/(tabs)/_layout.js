@@ -1,38 +1,48 @@
-
 import { Tabs } from 'expo-router';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import React from 'react';
 
-export default function TabsLayout() {
+export default function TabLayout() {
+  const accentColor = '#c4271eff';
+
   return (
     <Tabs
       screenOptions={{
-        headerShown: false, 
-        tabBarActiveTintColor: '#c4271eff', 
-        tabBarInactiveTintColor: '#8E8E93', 
+        tabBarActiveTintColor: accentColor,
+        tabBarInactiveTintColor: '#8E8E93',
         tabBarStyle: {
-          backgroundColor: '#1C1C1E', 
+          backgroundColor: '#000000', 
+          borderTopColor: '#1C1C1E',
+          height: 90,
+          paddingBottom: 20,
         },
-      }}
-    >
+        headerShown: false, 
+      }}>
+      
       <Tabs.Screen
-        name="index" 
+        name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="home" size={24} color={color} />
-          ),
+          title: 'News',
+          tabBarIcon: ({ color }) => <Ionicons name="newspaper-outline" color={color} size={28} />,
+        }}
+      />
+      
+      <Tabs.Screen
+        name="favorites"
+        options={{
+          title: 'Favorites',
+          tabBarButton: () => null, 
+        }}
+      />
+      
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <Ionicons name="person-outline" color={color} size={28} />,
         }}
       />
 
-      <Tabs.Screen
-        name="profile" 
-        options={{
-          title: 'Profil',
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="account" size={24} color={color} />
-          ),
-        }}
-      />
     </Tabs>
   );
 }
