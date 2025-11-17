@@ -9,12 +9,15 @@ import {
     Alert, 
     ScrollView, 
     KeyboardAvoidingView, 
-    Platform
+    Platform,
+    Image 
 } from 'react-native';
 import { useRouter } from 'expo-router'; 
 
 import { auth } from '../../../firebaseConfig'; 
 import { signInWithEmailAndPassword } from 'firebase/auth';
+
+const InformerLogo = require('../../../assets/images/informer_logo.png');
 
 export default function LoginScreen() {
     
@@ -61,6 +64,12 @@ export default function LoginScreen() {
         >
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 
+                <Image 
+                    source={InformerLogo} 
+                    style={styles.logo} 
+                    resizeMode="contain" 
+                />
+
                 <View style={styles.header}>
                     <Text style={styles.title}>Welcome Back</Text>
                     <Text style={styles.subtitle}>Please log in to continue reading.</Text>
@@ -130,6 +139,12 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     
+    logo: {
+        width: 200, 
+        height: 205, 
+        marginBottom: 0, 
+    },
+
     header: {
         marginBottom: 40,
         alignItems: 'center',
