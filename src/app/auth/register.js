@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,37 +6,87 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
-  Alert, 
-  ActivityIndicator, 
-} from 'react-native';
-import { useRouter } from 'expo-router';
-
-import { auth, db } from '../../../firebaseConfig'; 
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { setDoc, doc } from 'firebase/firestore'; 
+  Alert,
+  ActivityIndicator,
+} from "react-native";
+import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+import { Image } from "react-native";
+import { auth, db,storage } from "../../../firebaseConfig";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import * as FileSystem from 'expo-file-system';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { setDoc, doc } from "firebase/firestore";
 
 export default function RegisterScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [imageUri, setImageUri] = useState(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleRegister = async () => {
-    if (password !== confirmPassword) {
-      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas.');
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Désolé",
+        "Nous avons besoin de la permission pour accéder à vos photos."
+      );
       return;
     }
-    if (!firstName || !lastName || !email || !password) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
+
+  const handleRegister = async () => {
+    // 1. Validations (inchangées)
+    if (password !== confirmPassword) {
+      Alert.alert("Erreur", "Les mots de passe ne correspondent pas.");
+      return;
+    }
+    if (!firstName || !lastName || !email || !password || !imageUri) {
+      Alert.alert("Erreur", "Veuillez remplir tous les champs et choisir une photo.");
       return;
     }
 
     setLoading(true);
 
     try {
+      // 2. Upload de l'image (inchangé)
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      const storageRef = ref(storage, `profile_images/${Date.now()}`);
+      const uploadTask = await uploadBytesResumable(storageRef, blob);
+      const downloadURL = await getDownloadURL(uploadTask.ref);
+
+      // ▼▼▼ 3. NOUVELLE ÉTAPE : MISE EN CACHE LOCALE (Le "Portefeuille") ▼▼▼
+      // On définit un nom de fichier permanent sur le téléphone
+      const localUri = FileSystem.documentDirectory + `profile_${Date.now()}.jpg`;
+
+      // On copie l'image (que l'utilisateur a choisie) 
+      // de son emplacement temporaire (imageUri) 
+      // vers son emplacement permanent (localUri)
+      await FileSystem.copyAsync({
+        from: imageUri,
+        to: localUri
+      });
+      console.log("Image copiée localement sur :", localUri);
+      // ▲▲▲ FIN DE LA MISE EN CACHE ▲▲▲
+
+      // 4. Créer l'utilisateur (inchangé)
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -45,26 +94,35 @@ export default function RegisterScreen() {
       );
       const user = userCredential.user;
 
-      await setDoc(doc(db, 'users', user.uid), {
+      // 5. Sauvegarder dans Firestore (inchangé)
+      await setDoc(doc(db, "users", user.uid), {
         firstName: firstName,
         lastName: lastName,
         email: email,
+        profilePictureUrl: downloadURL, // L'URL de la "banque"
+        localProfilePicture: localUri, // L'URL du "portefeuille"
       });
 
+      // ▼▼▼ 6. NOUVELLE ÉTAPE : LE "POST-IT" (AsyncStorage) ▼▼▼
+      // On dit à l'app de se souvenir OÙ est l'image locale
+      await AsyncStorage.setItem('@user_profile_picture', localUri);
+      // ▲▲▲ FIN DU POST-IT ▲▲▲
+
+      // 7. Rediriger (inchangé)
       Alert.alert(
-        'Succès',
-        'Compte créé ! Vous pouvez maintenant vous connecter.'
+        "Succès",
+        "Compte créé ! Vous pouvez maintenant vous connecter."
       );
-      router.replace('/auth/login');
+      router.replace("/auth/login");
 
     } catch (error) {
-      console.error('Erreur Firebase:', error.code, error.message);
-      Alert.alert('Erreur', error.message);
+      console.error("Erreur Firebase:", error.code, error.message);
+      Alert.alert("Erreur", error.message);
     } finally {
       setLoading(false);
     }
   };
-  
+
   return (
     <ScrollView style={styles.container}>
       <Pressable onPress={() => router.back()} style={styles.backButton}>
@@ -72,10 +130,14 @@ export default function RegisterScreen() {
       </Pressable>
 
       <Text style={styles.title}>Register</Text>
-      
-      <View style={styles.imagePicker}>
-        <Text style={styles.imagePickerText}>+</Text>
-      </View>
+
+      <Pressable style={styles.imagePicker} onPress={pickImage}>
+        {imageUri ? (
+          <Image source={{ uri: imageUri }} style={styles.profileImage} />
+        ) : (
+          <Text style={styles.imagePickerText}>+</Text>
+        )}
+      </Pressable>
 
       <TextInput
         style={styles.input}
@@ -87,6 +149,7 @@ export default function RegisterScreen() {
       <TextInput
         style={styles.input}
         placeholder="Last Name"
+        placeholderTextColor="#8E8E93"
         value={lastName}
         onChangeText={setLastName}
       />
@@ -94,6 +157,7 @@ export default function RegisterScreen() {
         style={styles.input}
         placeholder="Email"
         value={email}
+        placeholderTextColor="#8E8E93"
         onChangeText={setEmail}
         keyboardType="email-address"
       />
@@ -101,6 +165,7 @@ export default function RegisterScreen() {
         style={styles.input}
         placeholder="Password"
         value={password}
+        placeholderTextColor="#8E8E93"
         onChangeText={setPassword}
         secureTextEntry
       />
@@ -108,6 +173,7 @@ export default function RegisterScreen() {
         style={styles.input}
         placeholder="Confirm Password"
         value={confirmPassword}
+        placeholderTextColor="#8E8E93"
         onChangeText={setConfirmPassword}
         secureTextEntry
       />
@@ -131,56 +197,60 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#1C1C1E', 
+    backgroundColor: "#1C1C1E",
   },
   backButton: {
-    marginTop: 20, 
+    marginTop: 20,
     marginBottom: 10,
-    width: 50, 
+    width: 50,
   },
   backButtonText: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 30,
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#FFF',
+    fontWeight: "bold",
+    color: "#FFF",
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   imagePicker: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#2C2C2E',
-    alignSelf: 'center',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#2C2C2E",
+    alignSelf: "center",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 30,
   },
   imagePickerText: {
-    color: '#8E8E93',
+    color: "#8E8E93",
     fontSize: 40,
   },
   input: {
-    backgroundColor: '#2C2C2E',
-    color: '#FFF',
+    backgroundColor: "#2C2C2E",
+    color: "#FFF",
     padding: 15,
     borderRadius: 8,
     marginBottom: 15,
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#c4271eff',
+    backgroundColor: "#c4271eff",
     padding: 15,
     borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 40, 
+    alignItems: "center",
+    marginBottom: 40,
+  },
+  profileImage: {
+    width: "100%",
+    height: "100%",
   },
   buttonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
+    color: "#FFF",
+    fontWeight: "bold",
     fontSize: 16,
   },
 });
