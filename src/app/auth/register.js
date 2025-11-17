@@ -52,7 +52,6 @@ export default function RegisterScreen() {
   };
 
   const handleRegister = async () => {
-    // 1. Validations (inchangées)
     if (password !== confirmPassword) {
       Alert.alert("Erreur", "Les mots de passe ne correspondent pas.");
       return;
@@ -65,28 +64,20 @@ export default function RegisterScreen() {
     setLoading(true);
 
     try {
-      // 2. Upload de l'image (inchangé)
       const response = await fetch(imageUri);
       const blob = await response.blob();
       const storageRef = ref(storage, `profile_images/${Date.now()}`);
       const uploadTask = await uploadBytesResumable(storageRef, blob);
       const downloadURL = await getDownloadURL(uploadTask.ref);
 
-      // ▼▼▼ 3. NOUVELLE ÉTAPE : MISE EN CACHE LOCALE (Le "Portefeuille") ▼▼▼
-      // On définit un nom de fichier permanent sur le téléphone
       const localUri = FileSystem.documentDirectory + `profile_${Date.now()}.jpg`;
 
-      // On copie l'image (que l'utilisateur a choisie) 
-      // de son emplacement temporaire (imageUri) 
-      // vers son emplacement permanent (localUri)
       await FileSystem.copyAsync({
         from: imageUri,
         to: localUri
       });
       console.log("Image copiée localement sur :", localUri);
-      // ▲▲▲ FIN DE LA MISE EN CACHE ▲▲▲
 
-      // 4. Créer l'utilisateur (inchangé)
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -94,21 +85,17 @@ export default function RegisterScreen() {
       );
       const user = userCredential.user;
 
-      // 5. Sauvegarder dans Firestore (inchangé)
       await setDoc(doc(db, "users", user.uid), {
         firstName: firstName,
         lastName: lastName,
         email: email,
-        profilePictureUrl: downloadURL, // L'URL de la "banque"
-        localProfilePicture: localUri, // L'URL du "portefeuille"
+        profilePictureUrl: downloadURL, 
+        localProfilePicture: localUri, 
       });
 
-      // ▼▼▼ 6. NOUVELLE ÉTAPE : LE "POST-IT" (AsyncStorage) ▼▼▼
-      // On dit à l'app de se souvenir OÙ est l'image locale
-      await AsyncStorage.setItem('@user_profile_picture', localUri);
-      // ▲▲▲ FIN DU POST-IT ▲▲▲
 
-      // 7. Rediriger (inchangé)
+      await AsyncStorage.setItem('@user_profile_picture', localUri);
+
       Alert.alert(
         "Succès",
         "Compte créé ! Vous pouvez maintenant vous connecter."

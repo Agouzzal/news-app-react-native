@@ -13,7 +13,6 @@ export default function App() {
         <Stack.Screen name="details" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" options={{ headerShown: false }} />
         
-        {/* CORRECTION ICI : enlève 'presentation: "modal"' */}
         <Stack.Screen name="auth" options={{ headerShown: false }} />
         
       </Stack>
