@@ -4,11 +4,11 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from '@expo/vector-icons/Ionicons'; 
 
-import { auth, db, storage } from '../../../firebaseConfig'; 
+import { auth, db, storage } from '../../../firebaseConfig';
 import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore'; 
 import { getAuth, signOut } from 'firebase/auth'; 
 import * as ImagePicker from 'expo-image-picker'; 
-import * as FileSystem from 'expo-file-system'; 
+import * as FileSystem from 'expo-file-system';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"; 
 
 const getFavoritesRef = (uid) => doc(db, 'userFavorites', uid);
@@ -16,7 +16,7 @@ const getFavoritesRef = (uid) => doc(db, 'userFavorites', uid);
 const uploadImageToFirebase = async (uri, uid) => {
     const response = await fetch(uri);
     const blob = await response.blob();
-    const storageRef = ref(storage, `profile_images/${uid}/profile.jpg`); 
+    const storageRef = ref(storage, `profile_images/${uid}/profile.jpg`);
     await uploadBytesResumable(storageRef, blob);
     return getDownloadURL(storageRef);
 };
@@ -38,7 +38,18 @@ export default function ProfileScreen() {
             return;
         }
 
-        const loadProfileData = async () => {
+        const favoritesRef = getFavoritesRef(user.uid);
+        const unsubscribeFavorites = onSnapshot(favoritesRef, (docSnap) => {
+            if (docSnap.exists() && docSnap.data().articles) {
+                setFavoritesCount(docSnap.data().articles.length);
+            } else {
+                setFavoritesCount(0);
+            }
+        }, (error) => {
+            console.error("Error fetching favorites:", error);
+        });
+
+        const initProfile = async () => {
             try {
                 const cachedImage = await AsyncStorage.getItem('@user_profile_picture');
                 if (cachedImage) setLocalImageUri(cachedImage);
@@ -54,39 +65,21 @@ export default function ProfileScreen() {
                 }
             } catch (error) {
                 console.error("Error loading profile:", error);
+            } finally {
+                setLoading(false);
             }
         };
 
-        const favoritesRef = getFavoritesRef(user.uid);
-        const unsubscribeFavorites = onSnapshot(favoritesRef, (docSnap) => {
-            if (docSnap.exists() && docSnap.data().articles) {
-                setFavoritesCount(docSnap.data().articles.length);
-            } else {
-                setFavoritesCount(0);
-            }
-            setLoading(false); 
-        }, (error) => {
-            console.error("Error fetching favorites count in real-time:", error);
-            setLoading(false);
-        });
-
-        loadProfileData();
+        initProfile(); 
 
         return () => unsubscribeFavorites(); 
     }, []);
 
-    const handleChangeProfilePicture = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== "granted") {
-            Alert.alert(
-                "Désolé",
-                "Nous avons besoin de la permission pour accéder à vos photos."
-            );
-            return;
-        }
+
+   const handleChangeProfilePicture = async () => {
 
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images, 
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true, 
             aspect: [1, 1], 
             quality: 0.5, 
@@ -185,13 +178,14 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
 
                 <Text style={styles.pseudonym}>{userData.pseudonym}</Text> 
+                <Text style={styles.emailText}>{userData.email}</Text>
             </View>
 
             <View style={styles.infoContainer}>
                 
                 <View style={styles.infoRow}>
-                    <Text style={styles.label}>Email </Text>
-                    <Text style={styles.emailText}>{userData.email}</Text>
+                    <Text style={styles.label}>Pseudonym</Text>
+                    <Text style={styles.text}>{userData.pseudonym}</Text>
                 </View>
                 
                 <View style={styles.infoRow}>
@@ -309,8 +303,8 @@ const styles = StyleSheet.create({
     },
     emailText: {
         fontFamily: 'Lato_400Regular',
-        fontSize: 17, 
-        color: '#ffffffff', 
+        fontSize: 14,
+        color: '#8E8E93',
     },
 
     infoContainer: {
