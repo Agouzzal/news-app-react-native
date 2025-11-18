@@ -22,7 +22,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.informer"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -32,6 +33,14 @@
       "expo-asset",
       "expo-font"
     ],
-    "scheme": "my-awesome-je-project"
+    "scheme": "my-awesome-je-project",
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "613ed121-d065-4b7d-9177-37d201779a58"
+      }
+    }
   }
 }
