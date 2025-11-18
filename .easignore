@@ -1,0 +1,7 @@
+.expo
+.maestro
+android/
+ios/
+node_modules/
+dist/
+web-build/
