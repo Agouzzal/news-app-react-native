@@ -4,11 +4,11 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from '@expo/vector-icons/Ionicons'; 
 
-import { auth, db, storage } from '../../../firebaseConfig';
+import { auth, db, storage } from '../../../firebaseConfig'; 
 import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore'; 
 import { getAuth, signOut } from 'firebase/auth'; 
 import * as ImagePicker from 'expo-image-picker'; 
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system'; 
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"; 
 
 const getFavoritesRef = (uid) => doc(db, 'userFavorites', uid);
@@ -16,7 +16,7 @@ const getFavoritesRef = (uid) => doc(db, 'userFavorites', uid);
 const uploadImageToFirebase = async (uri, uid) => {
     const response = await fetch(uri);
     const blob = await response.blob();
-    const storageRef = ref(storage, `profile_images/${uid}/profile.jpg`);
+    const storageRef = ref(storage, `profile_images/${uid}/profile.jpg`); 
     await uploadBytesResumable(storageRef, blob);
     return getDownloadURL(storageRef);
 };
@@ -75,13 +75,18 @@ export default function ProfileScreen() {
         return () => unsubscribeFavorites(); 
     }, []);
 
-
-   const handleChangeProfilePicture = async () => {
+    const handleChangeProfilePicture = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+            Alert.alert(
+                "Désolé",
+                "Nous avons besoin de la permission pour accéder à vos photos."
+            );
+            return;
+        }
 
         let result = await ImagePicker.launchImageLibraryAsync({
-            
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-
+            mediaTypes: ImagePicker.MediaTypeOptions.Images, 
             allowsEditing: true, 
             aspect: [1, 1], 
             quality: 0.5, 
@@ -185,7 +190,7 @@ export default function ProfileScreen() {
             <View style={styles.infoContainer}>
                 
                 <View style={styles.infoRow}>
-                    <Text style={styles.label}>eMail :</Text>
+                    <Text style={styles.label}>Email </Text>
                     <Text style={styles.emailText}>{userData.email}</Text>
                 </View>
                 
@@ -304,8 +309,8 @@ const styles = StyleSheet.create({
     },
     emailText: {
         fontFamily: 'Lato_400Regular',
-        fontSize: 17,
-        color: '#ffffffff',
+        fontSize: 17, 
+        color: '#ffffffff', 
     },
 
     infoContainer: {
