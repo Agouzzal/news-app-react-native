@@ -2,9 +2,10 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { FIREBASE_API_KEY } from './config.local';
 
 const firebaseConfig = {
-  apiKey: "FIREBASE_API_KEY",
+  apiKey: FIREBASE_API_KEY,
   authDomain: "news-app-6dcbd.firebaseapp.com",
   projectId: "news-app-6dcbd",
   storageBucket: "news-app-6dcbd.firebasestorage.app",
